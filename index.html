@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Zaza Text Corpus</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  nav {
+    width: 260px;
+    background: orange;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  nav h2 {
+    font-size: 1.2rem;
+    color: white;
+  }
+  nav ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  nav li {
+    margin: 0.5rem 0;
+  }
+  nav a {
+    color: white;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  iframe {
+    flex-grow: 1;
+    border: none;
+    width: 100%;
+    height: 100vh;
+  }</style>
+</head>
+<body>
+<nav>
+<div style="margin: 1em;">
+<label for="languageSelect">🌐 Language:</label>
+<select id="languageSelect" onchange="setLanguage(this.value)">
+<option value="en">English</option>
+<option value="de">Deutsch</option>
+<option value="tr">Türkçe</option>
+<option value="zaz">Zazakî</option>
+</select>
+</div>
+<h2>Zaza Text Corpus</h2>
+<ul>
+<li><a href="index.html" target="main">🏠 Home</a></li>
+<li><a href="search.html" target="main">🔍 Search</a></li>
+<li><strong>📚 Texts</strong></li>
+
+<li><a href="Aliyem.html" target="main">1. Aliyem</a></li>
+<li><a href="Ana_Dina.html" target="main">2. Ana Dina</a></li>
+<li><a href="Cem_ve_Neslihane_ra.html" target="main">3. Cem ve Neslihane ra</a></li>
+<li><a href="Cemila_Çêna_Şıx_Heseni.html" target="main">4. Cemila Çêna Şıx Heseni</a></li>
+<li><a href="Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html" target="main">5. Dı Budelaê Suke</a></li>
+<li><a href="Emina_Çêna_Dıle_Alê_Qeri.html" target="main">6. Emina Çêna Dıle Alê Qeri</a></li>
+<li><a href="Estemol.html" target="main">7. Estemol</a></li>
+<li><a href="Fide.html" target="main">8. Fide</a></li>
+<li><a href="Kılıte_Dersimi.html" target="main">9. Kılıte Dersimi</a></li>
+<li><a href="Lüye_ve_Heyvanunê_Gême_ra.html" target="main">10. Lüye ve Heyvanunê Gême ra</a></li>
+<li><a href="Qewğa_Alunê_Demenu.html" target="main">11. Qewğa Alunê Demenu</a></li>
+<li><a href="Sawci_çay_simenê.html" target="main">12. Sawci çay simenê</a></li>
+<li><a href="Sey_Momıd.html" target="main">13. Sey Momıd</a></li>
+<li><a href="Sey_Qaji.html" target="main">14. Sey Qaji</a></li>
+<li><a href="Sılemano_Qıc.html" target="main">15. Sılemano Qıc</a></li>
+<li><a href="Sılê_Phiti.html" target="main">16. Sılê Phiti</a></li>
+<li><a href="Ters_u_Xofê_Elife_ve_Çênu_ra.html" target="main">17. Ters u Xofê Elife ve Çênu ra</a></li>
+<li><a href="Vılê_Zini_de_astıkê_ma_serde_çinê.html" target="main">18. Vılê Zini de astıkê ma serde çinê</a></li>
+<li><a href="Xana_Feqire.html" target="main">19. Xana Feqire</a></li>
+<li><a href="Yemose_ve_Xıdıri_ra.html" target="main">20. Yemose ve Xıdıri ra</a></li>
+</ul>
+</nav>
+<div style="display: flex; flex-grow: 1;">
+<div id="welcome" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start;  text-align: center; flex-grow: 1; background: #f2f2f2;">
+
+<div id="intro" style="max-width: 800px; padding: 2rem; text-align: left;background: #f9f9f9; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+<h2>Zaza Text Corpus Project</h2>
+<p>This digital corpus was developed as part of a postdoctoral research project funded by
+  <strong>TÜBİTAK</strong> (The Scientific and Technological Research Council of Turkey) through its
+  <em>2219 – International Postdoctoral Research Fellowship Program</em>. The project was conducted at the
+  <strong>Institute for the Interdisciplinary Study of Language Evolution</strong> at the University of Zurich,
+  under the academic supervision of <strong>Prof. Dr. Paul Widmer</strong>.</p>
+<h3>Purpose and Structure</h3>
+<p>The corpus is based on a curated selection of <strong>20 texts</strong> written in a Northern dialect of Zazaki and
+  serves as the foundation for a structured, linguistically annotated Zaza language resource.</p>
+<p>Each text is enriched with detailed linguistic metadata, including:</p>
+<ul>
+<li>Part-of-speech (POS) tags</li>
+<li>Named entities</li>
+<li>Structural levels (sentence, phrase, word)</li>
+</ul>
+<p>The annotations span several linguistic domains and subcategories:</p>
+<ul>
+<li>Syntax</li>
+<li>Morphology</li>
+<li>Semantics</li>
+<li>Morphosyntax</li>
+<li>Lexicology</li>
+<li>Phrase structure</li>
+</ul>
+<h3>Technology</h3>
+<p>Annotation was performed using the digital tool <strong>CATMA</strong> (Computer Assisted Text Markup and Analysis).
+  While some texts are already fully annotated, others are still in progress. Annotations will continue to be added incrementally.</p>
+<p>Annotations are organized into six categories: <strong>Morphology</strong>, <strong>Syntax</strong>, <strong>Morphosyntax</strong>, <strong>Semantics</strong>, <strong>Phrase structure</strong>, and <strong>Lexicology</strong>. While annotation coverage is still incomplete, it is being continuously expanded. By hovering the mouse over a word, users can view its corresponding annotations. Annotations can also be downloaded for each individual text or as a combined dataset. Both words and annotation layers can be searched via the interface, with results highlighted in color for easy identification.</p>
+
+<p>Users can explore the corpus through:</p>
+<ul>
+<li>Keyword search</li>
+<li>Filtering options</li>
+<li>Statistical analysis tools</li>
+</ul>
+<h3>Project Objectives</h3>
+<p>This corpus was developed to serve multiple purposes:</p>
+<ul>
+<li>To support linguistic and philological research</li>
+<li>To contribute to the documentation and revitalization of the Zaza language (Zazaki)</li>
+<li>To provide high-quality language resources for students and educators</li>
+<li>To preserve and promote Zaza cultural heritage in its original linguistic form</li>
+</ul>
+
+<div style="margin-top: 2rem; font-size: 0.95rem; color: #444;">
+  <p><strong>This corpus was created by Assist. Prof. Dr. İlyas Arslan.</strong><br/>
+  All included texts were previously published by their respective authors.<br/>
+  The use of these texts in the corpus was authorized by the authors.<br/>
+  For academic use, please cite as follows:</p>
+  <p><em>Arslan, İ. (2025). <strong>Zaza Text Corpus</strong>. University of Zurich &amp; Munzur University. https://zaza-text-corpus.org</em></p>
+</div>
+</div><div id="logos" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 2rem; margin: 2rem auto 1rem auto; padding: 1rem; margin-top: 2rem; padding-top: 2rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #ccc;">
+<a href="https://www.munzur.edu.tr" target="_blank" title="Munzur Üniversitesi">
+<img alt="Munzur Üniversitesi" src="Munzur.png" style="height: 70px; max-width: 150px;"/>
+</a>
+<a href="https://tubitak.gov.tr/tr/burslar/doktora-sonrasi/arastirma-burs-programlari/2219-yurt-disi-doktora-sonrasi-arastirma-burs-programi" target="_blank" title="TÜBİTAK">
+<img alt="TÜBİTAK" src="TUBITAK.svg" style="height: 70px; max-width: 150px;"/>
+</a>
+<a href="https://www.uzh.ch" target="_blank" title="Universität Zürich">
+<img alt="Universität Zürich" src="UZH.png" style="height: 70px; max-width: 150px;"/>
+</a>
+<a href="https://catma.de" target="_blank" title="CATMA">
+<img alt="CATMA" src="catma.png" style="height: 70px; max-width: 150px;"/>
+</a>
+</div>
+</div>
+</div>
+<script>
+const translations = {
+    en: {
+        home: "Home",
+        search: "Search",
+        statistics: "Statistics",
+        texts: "Texts"
+    },
+de: {
+        home: "Startseite",
+        search: "Suche",
+        statistics: "Statistik",
+        texts: "Texte"
+    },
+    tr: {
+        home: "Ana Sayfa",
+        search: "Arama",
+        statistics: "İstatistik",
+        texts: "Metinler"
+    },
+    zaz: {
+        home: "Serpelge",
+        search: "Bıvine",
+        statistics: "İstatistik",
+        texts: "Metini"
+    }
+};
+
+function setLanguage(lang) {
+    localStorage.setItem('lang', lang);
+    const t = translations[lang];
+    document.getElementById('link-home')?.textContent = t.home;
+    document.getElementById('link-search')?.textContent = t.search;
+    document.getElementById('link-statistics')?.textContent = t.statistics;
+    document.getElementById('link-texts')?.textContent = t.texts;
+}
+
+function initLanguage() {
+    const lang = localStorage.getItem('lang') || 'en';
+    document.getElementById('languageSelect').value = lang;
+    setLanguage(lang);
+}
+window.onload = initLanguage;
+</script>
+<script>
+const infoTexts = {
+  en: {
+    title: "About the Zaza Text Corpus",
+    text: `The <em>Zaza Text Corpus</em> is a digital collection of literary texts in the Zazaki language, an endangered Northwest Iranian language spoken in eastern Turkey.
+    This corpus brings together a variety of genres – including folktales, stories, and prose – and makes them searchable, annotated, and accessible to the public.
+    It supports linguistic research, education, and language revitalization.`
+  },
+  de: {
+    title: "Über das Zaza-Textkorpus",
+    text: `Das <em>Zaza-Textkorpus</em> ist eine digitale Sammlung literarischer Texte in der bedrohten Sprache Zazaki.
+    Die Texte wurden annotiert und durchsuchbar gemacht, um Sprachforschung, Dokumentation und Sprachförderung zu unterstützen.`
+  },
+  tr: {
+    title: "Zaza Metin Derlemi Hakkında",
+    text: `<em>Zaza Metin Derlemi</em>, Zazaca yazılmış edebi metinlerden oluşan dijital bir koleksiyondur.
+    Bu derlem, dil araştırmaları, eğitim ve canlandırma amacıyla etiketlenmiş ve erişilebilir hale getirilmiştir.`
+  },
+  zaz: {
+    title: "Derheqê Korpusa Zazakî",
+    text: `<em>Korpusa Metinanê Zazakî</em> koleksiyonê metinanê edebîyo Zazakîyo.
+    Wena rê rêya lêkolînê, tedrîs û zıwanê Zazakî bide desteka xêraye. Hemî metinan bi etiketanê zıwanî rê amade biyo.`
+  }
+};
+
+function setLanguage(lang) {
+  localStorage.setItem('lang', lang);
+  const t = translations[lang];
+  document.getElementById('link-home')?.textContent = t.home;
+  document.getElementById('link-search')?.textContent = t.search;
+  document.getElementById('link-statistics')?.textContent = t.statistics;
+  document.getElementById('link-texts')?.textContent = t.texts;
+
+  const info = infoTexts[lang];
+  if (info) {
+    document.getElementById('infotitle').textContent = info.title;
+    document.getElementById('infotext').innerHTML = info.text;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Zaza Corpus – Suche</title>
+<style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        input, select { padding: 0.5em; margin-right: 1em; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+        th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+        #results { margin-top: 2em; }
+        .export-buttons { margin-top: 1em; }
+    </style>
+</head>
+<body>
+<div id="welcomeMessage" style="background: #f0f0f0; padding: 1em; border: 1px solid #ccc; margin-bottom: 1em;">
+<h2>👋 Welcome to the Zaza Text Corpus</h2>
+<p>This corpus contains annotated Zazaki texts. You can search for words or annotations using the form below.</p>
+<button onclick="document.getElementById('welcomeMessage').style.display='none'">Close</button>
+</div>
+<div style="margin: 1em;">
+<label for="languageSelect">🌐 Language:</label>
+<select id="languageSelect" onchange="setLanguage(this.value)">
+<option value="en">English</option>
+<option value="de">Deutsch</option>
+<option value="tr">Türkçe</option>
+<option value="zaz">Zazakî</option>
+</select>
+</div>
+
+<h1><span id="title">🔍 Zaza Corpus – Search &amp; Statistics</span></h1>
+<div>
+<label><span id="label-search-word">Search word</span>: <input id="searchInput" type="text"/></label>
+<label><span id="label-annotation-type">Annotation type</span>:
+            <select id="annotationTyp">
+<option value=""><span id="option-all">All</span></option>
+<option value="POS">POS</option>
+<option value="Layer">Layer</option>
+<option value="Entity">Entity</option>
+</select>
+</label>
+<label><span id="label-value">Value</span>: <input id="annotationWert" type="text"/></label>
+<button onclick="performSuche()"><span id="button-search-label">Search</span></button>
+</div>
+<div class="export-buttons">
+<button onclick="exportResults('csv')"><span id="button-csv-label">Export CSV</span></button>
+<button onclick="exportResults('json')"><span id="button-json-label">Export JSON</span></button>
+</div>
+<div id="results"></div>
+<div id="statistics"></div>
+<script>
+        const texts = {}; // Hier werden die Textdaten geladen
+
+        async function loadTexts() {
+            const files = [
+    "Aliyem.html",
+    "Ana_Dina.html",
+    "Cem_ve_Neslihane_ra.html",
+    "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html",
+    "Emina_Çêna_Dıle_Alê_Qeri.html",
+    "Estemol.html",
+    "Fide.html",
+    "Kılıte_Dersimi.html",
+    "Lüye_ve_Heyvanunê_Gême_ra.html",
+    "Qewğa_Alunê_Demenu.html",
+    "Sawci_çay_simenê.html",
+    "Sey_Momıd.html",
+    "Sey_Qaji.html",
+    "Sılemano_Qıc.html",
+    "Sılê_Phiti.html",
+    "Ters_u_Xofê_Elife_ve_Çênu_ra.html",
+    "Vılê_Zini_de_astıkê_ma_serde_çinê.html",
+    "Xana_Feqire.html",
+    "Yemose_ve_Xıdıri_ra.html",
+    "Çêna_Şixheseni_Leyla.html",
+];
+            for (let file of files) {
+                const response = await fetch(file);
+                const html = await response.text();
+                texts[file] = html;
+            }
+        }
+
+        function performSuche() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const type = document.getElementById("annotationTyp").value;
+            const value = document.getElementById("annotationWert").value.toLowerCase();
+
+            const results = [];
+
+            for (const [filename, html] of Object.entries(texts)) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, "text/html");
+                const spans = doc.querySelectorAll("span[data-annotation]");
+                spans.forEach(span => {
+                    const text = span.textContent.toLowerCase();
+                    const annotation = JSON.parse(span.getAttribute("data-annotation"));
+                    const matchText = !query || text.includes(query);
+                    const matchTyp = !type || annotation.type === type;
+                    const matchWert = !value || (annotation.value && annotation.value.toLowerCase().includes(value));
+                    if (matchText && matchTyp && matchWert) {
+                        results.push({
+                            file: filename,
+                            word: span.textContent,
+                            type: annotation.type || '',
+                            value: annotation.value || ''
+                        });
+                    }
+                });
+            }
+
+            showResults(results);
+            showStats(results);
+        }
+
+        function showResults(results) {
+            const container = document.getElementById("results");
+            if (results.length === 0) {
+                container.innerHTML = "<p id="no-results">No matches found.</p>";
+                return;
+            }
+            let html = "<table><tr><th id="th-text">Text</th><th id="th-word">Word</th><th id="th-type">Type</th><th id="th-value">Value</th></tr>";
+            for (const r of results) {
+                html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.type}</td><td>${r.value}</td></tr>`;
+            }
+            html += "</table>";
+            container.innerHTML = html;
+        }
+
+        function showStats(results) {
+            const container = document.getElementById("statistics");
+            const freq = {};
+            results.forEach(r => {
+                const key = r.type + ":" + r.value;
+                freq[key] = (freq[key] || 0) + 1;
+            });
+
+            let html = "<h2 id="statistics-title">📊 Statistics</h2><ul>";
+            for (const [key, count] of Object.entries(freq)) {
+                html += `<li>${key} – ${count}</li>`;
+            }
+            html += "</ul>";
+            container.innerHTML = html;
+        }
+
+        function exportResults(format) {
+            const table = document.querySelector("#results table");
+            if (!table) return alert("Keine Treffer zum Exportieren.");
+            const rows = Array.from(table.querySelectorAll("tr")).slice(1).map(tr =>
+                Array.from(tr.children).map(td => td.textContent)
+            );
+            if (format === "csv") {
+                let csv = "Text,Wort,Typ,Wert\n";
+                rows.forEach(row => csv += row.join(",") + "\n");
+                download("search_results.csv", csv);
+            } else if (format === "json") {
+                const data = rows.map(([file, word, type, value]) => ({ file, word, type, value }));
+                download("search_results.json", JSON.stringify(data, null, 2));
+            }
+        }
+
+        function download(filename, content) {
+            const blob = new Blob([content], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        loadTexts();
+    </script>
+<script>
+const translations = {
+    de: {
+        home: "Startseite",
+        search: "Suche",
+        statistics: "Statistik"
+    },
+    tr: {
+        home: "Ana Sayfa",
+        search: "Arama",
+        statistics: "İstatistik"
+    },
+    zaz: {
+        title: "🔍 Korpusa Zazakî – Lêgerîn u Heqêdariya",
+        search_word: "Qesê vinitene",
+        annotation_type: "Tîpa anotasyoni",
+        value: "Erde",
+        all: "Pêro",
+        search: "Bıvine",
+        export_csv: "CSV rê vece",
+        export_json: "JSON rê vece",
+        text: "Metini",
+        word: "Qes",
+        type: "Curey",
+        val: "Erde",
+        statistics: "📊 İstatistik",
+        no_results: "Çiyê nêdi"
+    }
+};
+
+function setLanguage(lang) {
+    localStorage.setItem('lang', lang);
+    const t = translations[lang];
+    document.getElementById('link-home')?.textContent = t.home;
+    document.getElementById('link-search')?.textContent = t.search;
+    document.getElementById('link-statistics')?.textContent = t.statistics;
+}
+
+function initLanguage() {
+    const lang = localStorage.getItem('lang') || 'de';
+    document.getElementById('languageSelect').value = lang;
+    setLanguage(lang);
+}
+window.onload = initLanguage;
+</script>
+<script>
+const uiTranslations = {
+    en: {
+        title: "🔍 Zaza Corpus – Search & Statistics",
+        search_word: "Search word",
+        annotation_type: "Annotation type",
+        value: "Value",
+        all: "All",
+        search: "Search",
+        export_csv: "Export CSV",
+        export_json: "Export JSON",
+        text: "Text",
+        word: "Word",
+        type: "Type",
+        val: "Value",
+        statistics: "📊 Statistics",
+        no_results: "No matches found."
+    },
+    de: {
+        title: "🔍 Zaza-Korpus – Suche & Statistik",
+        search_word: "Suchwort",
+        annotation_type: "Annotationstyp",
+        value: "Wert",
+        all: "Alle",
+        search: "Suche",
+        export_csv: "Als CSV exportieren",
+        export_json: "Als JSON exportieren",
+        text: "Text",
+        word: "Wort",
+        type: "Typ",
+        val: "Wert",
+        statistics: "📊 Statistik",
+        no_results: "Keine Treffer gefunden."
+    },
+    tr: {
+        title: "🔍 Zaza Derlemi – Arama & İstatistik",
+        search_word: "Aranacak kelime",
+        annotation_type: "Ek anotasyon tipi",
+        value: "Değer",
+        all: "Hepsi",
+        search: "Ara",
+        export_csv: "CSV Olarak Dışa Aktar",
+        export_json: "JSON Olarak Dışa Aktar",
+        text: "Metin",
+        word: "Kelime",
+        type: "Tür",
+        val: "Değer",
+        statistics: "📊 İstatistik",
+        no_results: "Sonuç bulunamadı."
+    },
+    zaz: {
+        title: "🔍 Korpusa Zazakî – Lêgerîn u Heqêdariya",
+        search_word: "Qesê vinitene",
+        annotation_type: "Tîpa anotasyoni",
+        value: "Erde",
+        all: "Pêro",
+        search: "Bıvine",
+        export_csv: "CSV rê vece",
+        export_json: "JSON rê vece",
+        text: "Metini",
+        word: "Qes",
+        type: "Curey",
+        val: "Erde",
+        statistics: "📊 İstatistik",
+        no_results: "Çiyê nêdi"
+    }
+};
+
+function updateUIText(lang) {
+    const t = uiTranslations[lang];
+    if (!t) return;
+    document.getElementById("title").textContent = t.title;
+    document.getElementById("label-search-word").textContent = t.search_word;
+    document.getElementById("label-annotation-type").textContent = t.annotation_type;
+    document.getElementById("label-value").textContent = t.value;
+    document.getElementById("option-all").textContent = t.all;
+    document.getElementById("button-search-label").textContent = t.search;
+    document.getElementById("button-csv-label").textContent = t.export_csv;
+    document.getElementById("button-json-label").textContent = t.export_json;
+    document.getElementById("th-text").textContent = t.text;
+    document.getElementById("th-word").textContent = t.word;
+    document.getElementById("th-type").textContent = t.type;
+    document.getElementById("th-value").textContent = t.val;
+    const statTitle = document.getElementById("statistics-title");
+    if (statTitle) statTitle.textContent = t.statistics;
+    const noResults = document.getElementById("no-results");
+    if (noResults) noResults.textContent = t.no_results;
+}
+
+function setLanguage(lang) {
+    localStorage.setItem("lang", lang);
+    updateUIText(lang);
+}
+
+function initLanguage() {
+    const lang = localStorage.getItem("lang") || "en";
+    document.getElementById("languageSelect").value = lang;
+    updateUIText(lang);
+}
+window.onload = initLanguage;
+</script>
+</body>
+</html>
