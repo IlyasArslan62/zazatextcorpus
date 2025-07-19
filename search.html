@@ -73,11 +73,11 @@ async function performSearch() {
         (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
         (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
       ) {
-        const tokens = Array.from(spans).map(s => s.textContent.trim());
-        const left = tokens.slice(Math.max(i - 5, 0), i).join(" ");
-        const right = tokens.slice(i + 1, i + 6).join(" ");
-        const kwic = `${left} <span class='kwic-hit'>${word}</span> ${right}`;
-        results.push({ file, word, annotation, context: kwic });
+        
+        const sentence = span.closest("span.sentence")?.innerHTML || "";
+        const highlighted = sentence.replace(word, `<span class='kwic-hit'>${word}</span>`);
+        results.push({ file, word, annotation, context: highlighted });
+
       }
     });
   }
@@ -141,4 +141,3 @@ function download(filename, content) {
 </script>
 </body>
 </html>
-
