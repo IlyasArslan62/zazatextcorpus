@@ -1,8 +1,10 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Zaza Corpus – Search</title>
+<title>Zaza Corpus – Search (Lazy Load)</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 2em; }
   input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
@@ -15,11 +17,12 @@
 <body>
 <h1>Zaza Corpus – Search Tool</h1>
 <div>
-  <input id="wordInput" type="text" placeholder="🔤 Word contains..." onkeyup="performSearch()" />
-  <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..." onkeyup="performSearch()" />
-  <select id="fileFilter" onchange="performSearch()">
+  <input id="wordInput" type="text" placeholder="🔤 Word contains..." />
+  <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..." />
+  <select id="fileFilter">
     <option value="">📂 All texts</option>
   </select>
+  <button onclick="performSearch()">Search</button>
   <button onclick="exportResults('csv')">Export CSV</button>
   <button onclick="exportResults('json')">Export JSON</button>
 </div>
@@ -27,42 +30,38 @@
 <div id="stats"></div>
 
 <script>
-const texts = {};
+const files = [
+  "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
+  "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html", "Emina_Çêna_Dıle_Alê_Qeri.html",
+  "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
+  "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
+  "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
+  "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini_de_astıkê_ma_serde_çinê.html",
+  "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila Çêna Şıx Heseni.html"
+];
 const results = [];
 
-async function loadTexts() {
-  const files = [
-    "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
-    "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html", "Emina_Çêna_Dıle_Alê_Qeri.html",
-    "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
-    "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
-    "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
-    "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini_de_astıkê_ma_serde_çinê.html",
-    "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila Çêna Şıx Heseni.html"
-  ];
+window.onload = () => {
   const filter = document.getElementById("fileFilter");
   files.forEach(f => {
     const opt = document.createElement("option");
     opt.value = f; opt.textContent = f;
     filter.appendChild(opt);
   });
-  for (let file of files) {
-    const res = await fetch(file);
-    const html = await res.text();
-    texts[file] = html;
-  }
-  performSearch();
-}
+};
 
-function performSearch() {
+async function performSearch() {
   const wordQuery = document.getElementById("wordInput").value.toLowerCase().trim();
   const annotationQuery = document.getElementById("annotationInput").value.toLowerCase().trim();
   const fileFilter = document.getElementById("fileFilter").value;
 
   results.length = 0;
 
-  for (const [filename, html] of Object.entries(texts)) {
-    if (fileFilter && filename !== fileFilter) continue;
+  const selectedFiles = fileFilter ? [fileFilter] : files;
+
+  for (const file of selectedFiles) {
+    const res = await fetch(file);
+    const html = await res.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     const spans = doc.querySelectorAll("span.annotated");
@@ -78,7 +77,7 @@ function performSearch() {
         const left = tokens.slice(Math.max(i - 5, 0), i).join(" ");
         const right = tokens.slice(i + 1, i + 6).join(" ");
         const kwic = `${left} <span class='kwic-hit'>${word}</span> ${right}`;
-        results.push({ file: filename, word, annotation, context: kwic });
+        results.push({ file, word, annotation, context: kwic });
       }
     });
   }
@@ -139,8 +138,7 @@ function download(filename, content) {
   a.download = filename;
   a.click();
 }
-
-loadTexts();
 </script>
 </body>
 </html>
+
