@@ -74,10 +74,15 @@ async function performSearch() {
         (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
       ) {
         
+        
+        
         let sentenceEl = span.closest("span.sentence");
-        let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
-        const highlighted = sentenceHTML.replace(word, `<span class='kwic-hit'>${word}</span>`);
+        let sentenceText = sentenceEl ? sentenceEl.textContent : span.textContent;
+        const wordRegex = new RegExp(`\b${word.replace(/[.*+?^${}()|[\]\]/g, '\$&')}\b`, 'gi');
+        const highlighted = sentenceText.replace(wordRegex, '<span class="kwic-hit">$&</span>');
         results.push({ file, word, annotation, context: highlighted });
+
+
 
       }
     });
