@@ -74,8 +74,9 @@ async function performSearch() {
         (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
       ) {
         
-        const sentence = span.closest("span.sentence")?.innerHTML || "";
-        const highlighted = sentence.replace(word, `<span class='kwic-hit'>${word}</span>`);
+        let sentenceEl = span.closest("span.sentence");
+        let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
+        const highlighted = sentenceHTML.replace(word, `<span class='kwic-hit'>${word}</span>`);
         results.push({ file, word, annotation, context: highlighted });
 
       }
