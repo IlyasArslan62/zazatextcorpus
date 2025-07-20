@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Zaza Corpus – Search (Lazy Load)</title>
+<title>Zaza Corpus – Search</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 2em; }
   input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
@@ -74,15 +74,10 @@ async function performSearch() {
         (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
       ) {
         
-        
-        
         let sentenceEl = span.closest("span.sentence");
-        let sentenceText = sentenceEl ? sentenceEl.textContent : span.textContent;
-        const wordRegex = new RegExp(`\b${word.replace(/[.*+?^${}()|[\]\]/g, '\$&')}\b`, 'gi');
-        const highlighted = sentenceText.replace(wordRegex, '<span class="kwic-hit">$&</span>');
+        let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
+        const highlighted = sentenceHTML.replace(word, `<span class='kwic-hit'>${word}</span>`);
         results.push({ file, word, annotation, context: highlighted });
-
-
 
       }
     });
