@@ -63,29 +63,18 @@
         const html = await res.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
-        const spans = doc.querySelectorAll("span.annotated");
+        
+        // Suche nach allen Sätzen im HTML-Dokument
+        const sentences = doc.querySelectorAll("span.sentence");
 
-        spans.forEach((span) => {
-          const word = span.childNodes[0]?.textContent?.trim() || "";
-          const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
-          if (
-            (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
-            (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
-          ) {
-            // Versuche den Satz zu extrahieren
-            let sentenceEl = span.closest("span.sentence");
-            let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
-
-            // Wenn kein Satz gefunden wird, versuche den Kontext aus benachbarten Texten zu extrahieren
-            if (!sentenceText) {
-              let prevText = span.previousElementSibling ? span.previousElementSibling.textContent.trim() : '';
-              let nextText = span.nextElementSibling ? span.nextElementSibling.textContent.trim() : '';
-              sentenceText = `${prevText} ${span.textContent.trim()} ${nextText}`.trim();
-            }
-
-            // Wenn der Satz gefunden wird, stelle sicher, dass das gesuchte Wort hervorgehoben wird
-            const highlightedSentence = sentenceText.replace(word, `<span class='kwic-hit'>${word}</span>`);
-            results.push({ file, word, annotation, context: highlightedSentence });
+        sentences.forEach((sentence) => {
+          const sentenceText = sentence.textContent.trim();
+          
+          // Suche nach dem Wort im Satz
+          if (sentenceText.toLowerCase().includes(wordQuery)) {
+            // Wenn das Wort gefunden wird, markiere es und füge den Satz zur Ergebnisliste hinzu
+            const highlightedSentence = sentenceText.replace(new RegExp(wordQuery, 'gi'), (match) => `<span class="kwic-hit">${match}</span>`);
+            results.push({ file, word: wordQuery, annotation: "", context: highlightedSentence });
           }
         });
       }
