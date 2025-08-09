@@ -72,10 +72,18 @@
             (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
             (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
+            // Extrahiere den Satz, in dem das gesuchte Wort vorkommt
             let sentenceEl = span.closest("span.sentence");
             let sentenceText = sentenceEl ? sentenceEl.textContent : span.textContent;
-            
-            // Highlight the word within the sentence
+
+            // Wenn der Satz nicht gefunden wird, versuche, einen größeren Kontext zu extrahieren
+            if (!sentenceText) {
+              let prevSibling = span.previousElementSibling ? span.previousElementSibling.textContent : '';
+              let nextSibling = span.nextElementSibling ? span.nextElementSibling.textContent : '';
+              sentenceText = `${prevSibling} ${span.textContent} ${nextSibling}`.trim();
+            }
+
+            // Hervorhebung des gesuchten Worts im Satz
             const highlightedSentence = sentenceText.replace(word, `<span class='kwic-hit'>${word}</span>`);
             results.push({ file, word, annotation, context: highlightedSentence });
           }
@@ -141,4 +149,3 @@
   </script>
 </body>
 </html>
-
