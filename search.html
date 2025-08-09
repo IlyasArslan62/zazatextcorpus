@@ -63,18 +63,19 @@
         const html = await res.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
-        
+
         // Suche nach allen Sätzen im HTML-Dokument
         const sentences = doc.querySelectorAll("span.sentence");
 
         sentences.forEach((sentence) => {
           const sentenceText = sentence.textContent.trim();
-          
-          // Suche nach dem Wort im Satz
-          if (sentenceText.toLowerCase().includes(wordQuery)) {
-            // Wenn das Wort gefunden wird, markiere es und füge den Satz zur Ergebnisliste hinzu
+          const annotation = sentence.querySelector(".tooltip-box") ? sentence.querySelector(".tooltip-box").textContent.trim() : "";
+
+          // Prüfe, ob das Wort oder die Annotation im Satz vorkommt
+          if ((sentenceText.toLowerCase().includes(wordQuery)) || (annotation && annotation.toLowerCase().includes(annotationQuery))) {
+            // Markiere das gesuchte Wort und füge den Satz zur Ergebnisliste hinzu
             const highlightedSentence = sentenceText.replace(new RegExp(wordQuery, 'gi'), (match) => `<span class="kwic-hit">${match}</span>`);
-            results.push({ file, word: wordQuery, annotation: "", context: highlightedSentence });
+            results.push({ file, word: wordQuery, annotation, context: highlightedSentence });
           }
         });
       }
