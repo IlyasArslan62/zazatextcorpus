@@ -9,7 +9,7 @@
     table { border-collapse: collapse; width: 100%; margin-top: 1em; }
     th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
     #results, #stats { margin-top: 2em; }
-    .kwic-hit { background: yellow; font-weight: bold; padding: 0 2px; }
+    .kwic-hit { background: yellow; font-weight: bold; }
     .kwic-context { color: #555; font-size: 0.9em; }
   </style>
 </head>
@@ -72,8 +72,8 @@
             (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
             (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
-            // Versuche, den gesamten Satz zu extrahieren, in dem das gesuchte Wort vorkommt
-            let sentenceEl = span.closest("span.sentence"); // Hole den Satz
+            // Versuche den Satz zu extrahieren
+            let sentenceEl = span.closest("span.sentence");
             let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
 
             // Wenn kein Satz gefunden wird, versuche den Kontext aus benachbarten Texten zu extrahieren
