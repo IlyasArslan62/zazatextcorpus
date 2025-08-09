@@ -1,32 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<title>Zaza Corpus – Search</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 2em; }
-  input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
-  table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-  th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
-  #results, #stats { margin-top: 2em; }
-  .kwic-hit { background: yellow; font-weight: bold; }
-</style>
-</head>
-<body>
-<h1>Zaza Corpus – Search Tool</h1>
-<div>
-  <input id="wordInput" type="text" placeholder="🔤 Word contains..." />
-  <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..." />
-  <select id="fileFilter">
-    <option value="">📂 All texts</option>
-  </select>
-  <button onclick="performSearch()">Search</button>
-  <button onclick="exportResults('csv')">Export CSV</button>
-  <button onclick="exportResults('json')">Export JSON</button>
-</div>
-<div id="results"></div>
-<div id="stats"></div>
-
 <script>
 const files = [
   "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
@@ -71,12 +42,21 @@ async function performSearch() {
         (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
         (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
       ) {
-        
         let sentenceEl = span.closest("span.sentence");
         let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
-        const highlighted = sentenceHTML.replace(word, <span class='kwic-hit'>${word}</span>);
-        results.push({ file, word, annotation, context: highlighted });
+        let sentenceText = sentenceEl ? sentenceEl.textContent : span.textContent;
 
+        // Highlight the word in the context (if found)
+        // Use a RegExp for global, case-insensitive matching
+        let kwicHTML;
+        if (wordQuery) {
+          const re = new RegExp(`(${wordQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+          kwicHTML = sentenceHTML.replace(re, "<span class='kwic-hit'>$1</span>");
+        } else {
+          kwicHTML = sentenceHTML;
+        }
+
+        results.push({ file, word, annotation, context: kwicHTML, sentence: sentenceText });
       }
     });
   }
@@ -94,7 +74,12 @@ function showResults(data) {
   }
   let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
   for (const r of data) {
-    html += <tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td>${r.context}</td></tr>;
+    html += `<tr>
+      <td>${r.file}</td>
+      <td>${r.word}</td>
+      <td>${r.annotation}</td>
+      <td>${r.context}<br><span style='color: #555; font-size: 0.95em; display:block; margin-top:0.5em;'><i>Sentence: ${r.sentence}</i></span></td>
+    </tr>`;
   }
   html += "</table>";
   container.innerHTML = html;
@@ -111,7 +96,7 @@ function showStats(data) {
   });
   let html = "<h2>📊 Annotation Statistics</h2><ul>";
   for (const [ann, count] of Object.entries(freq)) {
-    html += <li><b>${ann}</b>: ${count}</li>;
+    html += `<li><b>${ann}</b>: ${count}</li>`;
   }
   html += "</ul>";
   container.innerHTML = html;
@@ -120,9 +105,9 @@ function showStats(data) {
 function exportResults(format) {
   if (results.length === 0) return alert("No results to export.");
   if (format === "csv") {
-    let csv = "Text,Word,Annotation,KWIC\n";
+    let csv = "Text,Word,Annotation,KWIC,Sentence\n";
     results.forEach(r => {
-      csv += "${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n;
+      csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}","${r.sentence.replace(/"/g, '""')}"\n`;
     });
     download("search_results.csv", csv);
   } else {
@@ -138,5 +123,3 @@ function download(filename, content) {
   a.click();
 }
 </script>
-</body>
-</html>
