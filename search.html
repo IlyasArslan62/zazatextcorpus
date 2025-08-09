@@ -10,7 +10,6 @@
     th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
     #results, #stats { margin-top: 2em; }
     .kwic-hit { background: yellow; font-weight: bold; padding: 0 2px; }
-    .kwic-context { color: #555; font-size: 0.9em; }
     .kwic-container { padding: 5px; border: 1px solid #ddd; margin-bottom: 10px; }
   </style>
 </head>
@@ -75,6 +74,8 @@
 
             let sentenceEl = span.closest("span.sentence");
             let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
+
+            // Heben das gesuchte Wort im Satz hervor
             const highlighted = sentenceHTML.replace(word, `<span class='kwic-hit'>${word}</span>`);
             results.push({ file, word, annotation, context: highlighted });
           }
@@ -92,7 +93,7 @@
         document.getElementById("stats").innerHTML = "";
         return;
       }
-      let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>Context (Sentence)</th></tr>";
+      let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
       data.forEach(r => {
         html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td>${r.context}</td></tr>`;
       });
@@ -120,7 +121,7 @@
     function exportResults(format) {
       if (results.length === 0) return alert("No results to export.");
       if (format === "csv") {
-        let csv = "Text,Word,Annotation,Context\n";
+        let csv = "Text,Word,Annotation,KWIC\n";
         results.forEach(r => {
           csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n`;
         });
