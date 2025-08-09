@@ -9,7 +9,7 @@
     table { border-collapse: collapse; width: 100%; margin-top: 1em; }
     th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
     #results, #stats { margin-top: 2em; }
-    .kwic-hit { background: yellow; font-weight: bold; }
+    .kwic-hit { background: yellow; font-weight: bold; padding: 0 2px; }
     .kwic-context { color: #555; font-size: 0.9em; }
   </style>
 </head>
@@ -72,18 +72,18 @@
             (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
             (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
-            // Extrahiere den Satz, in dem das gesuchte Wort vorkommt
-            let sentenceEl = span.closest("span.sentence");
-            let sentenceText = sentenceEl ? sentenceEl.textContent : span.textContent;
+            // Versuche, den gesamten Satz zu extrahieren, in dem das gesuchte Wort vorkommt
+            let sentenceEl = span.closest("span.sentence"); // Hole den Satz
+            let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
 
-            // Wenn der Satz nicht gefunden wird, versuche, einen größeren Kontext zu extrahieren
+            // Wenn kein Satz gefunden wird, versuche den Kontext aus benachbarten Texten zu extrahieren
             if (!sentenceText) {
-              let prevSibling = span.previousElementSibling ? span.previousElementSibling.textContent : '';
-              let nextSibling = span.nextElementSibling ? span.nextElementSibling.textContent : '';
-              sentenceText = `${prevSibling} ${span.textContent} ${nextSibling}`.trim();
+              let prevText = span.previousElementSibling ? span.previousElementSibling.textContent.trim() : '';
+              let nextText = span.nextElementSibling ? span.nextElementSibling.textContent.trim() : '';
+              sentenceText = `${prevText} ${span.textContent.trim()} ${nextText}`.trim();
             }
 
-            // Hervorhebung des gesuchten Worts im Satz
+            // Wenn der Satz gefunden wird, stelle sicher, dass das gesuchte Wort hervorgehoben wird
             const highlightedSentence = sentenceText.replace(word, `<span class='kwic-hit'>${word}</span>`);
             results.push({ file, word, annotation, context: highlightedSentence });
           }
