@@ -21,7 +21,7 @@
     <select id="fileFilter">
       <option value="">📂 All texts</option>
     </select>
-    <button onclick="performSearch()">Search</button>
+    <button id="searchButton">Search</button>
     <button onclick="exportResults('csv')">Export CSV</button>
     <button onclick="exportResults('json')">Export JSON</button>
   </div>
@@ -47,6 +47,10 @@
         opt.value = f; opt.textContent = f;
         filter.appendChild(opt);
       });
+
+      // Ensure that the search is triggered by clicking the button, not automatically
+      const searchButton = document.getElementById("searchButton");
+      searchButton.addEventListener("click", performSearch);
     };
 
     async function performSearch() {
@@ -64,29 +68,19 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
 
-        // Alle Texte im Dokument durchsuchen, um den Satz zu extrahieren
-        const spans = doc.querySelectorAll("span.annotated");
+        // Suche nach allen Sätzen im HTML-Dokument
+        const sentences = doc.querySelectorAll("span.sentence");
 
-        spans.forEach((span) => {
-          const word = span.childNodes[0]?.textContent?.trim() || "";
-          const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
+        sentences.forEach((sentence) => {
+          const sentenceText = sentence.textContent.trim();
+          const annotation = sentence.querySelector(".tooltip-box") ? sentence.querySelector(".tooltip-box").textContent.trim() : "";
 
-          // Überprüfe, ob das Wort oder die Annotation im Satz enthalten ist
+          // Überprüfe, ob das Wort oder die Annotation im Satz vorkommt
           if (
-            (!wordQuery || word.toLowerCase().includes(wordQuery)) ||
-            (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
+            (wordQuery && sentenceText.toLowerCase().includes(wordQuery)) ||
+            (annotationQuery && annotation.toLowerCase().includes(annotationQuery))
           ) {
-            let sentenceEl = span.closest("span.sentence");
-            let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
-
-            // Wenn kein Satz gefunden wird, versuchen wir den angrenzenden Kontext zu extrahieren
-            if (!sentenceText) {
-              let prevText = span.previousElementSibling ? span.previousElementSibling.textContent.trim() : '';
-              let nextText = span.nextElementSibling ? span.nextElementSibling.textContent.trim() : '';
-              sentenceText = `${prevText} ${span.textContent.trim()} ${nextText}`.trim();
-            }
-
-            // Markiere das gesuchte Wort im Satz
+            // Markiere das gesuchte Wort und füge den Satz zur Ergebnisliste hinzu
             const highlightedSentence = sentenceText.replace(new RegExp(wordQuery, 'gi'), (match) => `<span class="kwic-hit">${match}</span>`);
             results.push({ file, word: wordQuery, annotation, context: highlightedSentence });
           }
