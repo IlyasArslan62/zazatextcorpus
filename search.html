@@ -80,6 +80,7 @@
             (wordQuery && word.toLowerCase().includes(wordQuery)) ||
             (annotationQuery && annotation.toLowerCase().includes(annotationQuery))
           ) {
+            // Den kompletten Satz extrahieren
             let sentenceEl = span.closest("span.sentence");
             let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
 
@@ -108,9 +109,9 @@
         document.getElementById("stats").innerHTML = "";
         return;
       }
-      let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
+      let html = "<table><tr><th>Text</th><th>Word</th><th>KWIC</th></tr>";
       data.forEach(r => {
-        html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
+        html += `<tr><td>${r.file}</td><td>${r.word}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
       });
       html += "</table>";
       container.innerHTML = html;
@@ -136,9 +137,9 @@
     function exportResults(format) {
       if (results.length === 0) return alert("No results to export.");
       if (format === "csv") {
-        let csv = "Text,Word,Annotation,KWIC\n";
+        let csv = "Text,Word,KWIC\n";
         results.forEach(r => {
-          csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n`;
+          csv += `"${r.file}","${r.word}","${r.context.replace(/"/g, '""')}"\n`;
         });
         download("search_results.csv", csv);
       } else {
