@@ -1,141 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Zaza Corpus – Search</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
-    #results, #stats { margin-top: 2em; }
-    .kwic-hit { background: yellow; font-weight: bold; }
-    .kwic-context { color: #555; font-size: 0.9em; }
-  </style>
+<meta charset="utf-8"/>
+<title>Zaza Corpus – Search</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 2em; }
+  input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+  th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+  #results, #stats { margin-top: 2em; }
+  .kwic-hit { background: yellow; font-weight: bold; }
+</style>
 </head>
 <body>
-  <h1>Zaza Corpus – Search Tool</h1>
-  <div>
-    <input id="wordInput" type="text" placeholder="🔤 Word contains..."/>
-    <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..."/>
-    <select id="fileFilter">
-      <option value="">📂 All texts</option>
-    </select>
-    <button onclick="performSearch()">Search</button>
-    <button onclick="exportResults('csv')">Export CSV</button>
-    <button onclick="exportResults('json')">Export JSON</button>
-  </div>
-  <div id="results"></div>
-  <div id="stats"></div>
+<h1>Zaza Corpus – Search Tool</h1>
+<div>
+  <input id="wordInput" type="text" placeholder="🔤 Word contains..." />
+  <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..." />
+  <select id="fileFilter">
+    <option value="">📂 All texts</option>
+  </select>
+  <button onclick="performSearch()">Search</button>
+  <button onclick="exportResults('csv')">Export CSV</button>
+  <button onclick="exportResults('json')">Export JSON</button>
+</div>
+<div id="results"></div>
+<div id="stats"></div>
 
-  <script>
-    const files = [
-      "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
-      "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html", "Emina_Çêna_Dıle_Alê_Qeri.html",
-      "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
-      "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
-      "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
-      "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini-de-astıkê-ma-serde-çinê.html",
-      "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila_Çêna_Şıx_Heseni.html"
-    ];
-    const results = [];
+<script>
+const files = [
+  "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
+  "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html", "Emina_Çêna_Dıle_Alê_Qeri.html",
+  "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
+  "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
+  "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
+  "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini_de_astıkê_ma_serde_çinê.html",
+  "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila Çêna Şıx Heseni.html"
+];
+const results = [];
 
-    window.onload = () => {
-      const filter = document.getElementById("fileFilter");
-      files.forEach(f => {
-        const opt = document.createElement("option");
-        opt.value = f; opt.textContent = f;
-        filter.appendChild(opt);
-      });
-    };
+window.onload = () => {
+  const filter = document.getElementById("fileFilter");
+  files.forEach(f => {
+    const opt = document.createElement("option");
+    opt.value = f; opt.textContent = f;
+    filter.appendChild(opt);
+  });
+};
 
-    async function performSearch() {
-      const wordQuery = document.getElementById("wordInput").value.toLowerCase().trim();
-      const annotationQuery = document.getElementById("annotationInput").value.toLowerCase().trim();
-      const fileFilter = document.getElementById("fileFilter").value;
+async function performSearch() {
+  const wordQuery = document.getElementById("wordInput").value.toLowerCase().trim();
+  const annotationQuery = document.getElementById("annotationInput").value.toLowerCase().trim();
+  const fileFilter = document.getElementById("fileFilter").value;
 
-      results.length = 0;
+  results.length = 0;
 
-      const selectedFiles = fileFilter ? [fileFilter] : files;
+  const selectedFiles = fileFilter ? [fileFilter] : files;
 
-      for (const file of selectedFiles) {
-        const res = await fetch(file);
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
+  for (const file of selectedFiles) {
+    const res = await fetch(file);
+    const html = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const spans = doc.querySelectorAll("span.annotated");
 
-        // Suche nach allen Sätzen im HTML-Dokument
-        const sentences = doc.querySelectorAll("span.sentence");
+    spans.forEach((span, i) => {
+      const word = span.childNodes[0]?.textContent?.trim() || "";
+      const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
+      if (
+        (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
+        (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
+      ) {
+        
+        let sentenceEl = span.closest("span.sentence");
+        let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
+        const highlighted = sentenceHTML.replace(word, <span class='kwic-hit'>${word}</span>);
+        results.push({ file, word, annotation, context: highlighted });
 
-        sentences.forEach((sentence) => {
-          const sentenceText = sentence.textContent.trim();
-          const annotation = sentence.querySelector(".tooltip-box") ? sentence.querySelector(".tooltip-box").textContent.trim() : "";
-
-          // Prüfe, ob das Wort oder die Annotation im Satz vorkommt
-          if ((sentenceText.toLowerCase().includes(wordQuery)) || (annotation && annotation.toLowerCase().includes(annotationQuery))) {
-            // Markiere das gesuchte Wort und füge den Satz zur Ergebnisliste hinzu
-            const highlightedSentence = sentenceText.replace(new RegExp(wordQuery, 'gi'), (match) => `<span class="kwic-hit">${match}</span>`);
-            results.push({ file, word: wordQuery, annotation, context: highlightedSentence });
-          }
-        });
       }
+    });
+  }
 
-      showResults(results);
-      showStats(results);
-    }
+  showResults(results);
+  showStats(results);
+}
 
-    function showResults(data) {
-      const container = document.getElementById("results");
-      if (data.length === 0) {
-        container.innerHTML = "<p>No results found.</p>";
-        document.getElementById("stats").innerHTML = "";
-        return;
-      }
-      let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
-      data.forEach(r => {
-        html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
-      });
-      html += "</table>";
-      container.innerHTML = html;
-    }
+function showResults(data) {
+  const container = document.getElementById("results");
+  if (data.length === 0) {
+    container.innerHTML = "<p>No results found.</p>";
+    document.getElementById("stats").innerHTML = "";
+    return;
+  }
+  let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
+  for (const r of data) {
+    html += <tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td>${r.context}</td></tr>;
+  }
+  html += "</table>";
+  container.innerHTML = html;
+}
 
-    function showStats(data) {
-      const container = document.getElementById("stats");
-      const freq = {};
-      data.forEach(r => {
-        r.annotation.split("|").forEach(a => {
-          const key = a.trim();
-          if (key) freq[key] = (freq[key] || 0) + 1;
-        });
-      });
-      let html = "<h2>📊 Annotation Statistics</h2><ul>";
-      for (const [ann, count] of Object.entries(freq)) {
-        html += `<li><b>${ann}</b>: ${count}</li>`;
-      }
-      html += "</ul>";
-      container.innerHTML = html;
-    }
+function showStats(data) {
+  const container = document.getElementById("stats");
+  const freq = {};
+  data.forEach(r => {
+    r.annotation.split("|").forEach(a => {
+      const key = a.trim();
+      if (key) freq[key] = (freq[key] || 0) + 1;
+    });
+  });
+  let html = "<h2>📊 Annotation Statistics</h2><ul>";
+  for (const [ann, count] of Object.entries(freq)) {
+    html += <li><b>${ann}</b>: ${count}</li>;
+  }
+  html += "</ul>";
+  container.innerHTML = html;
+}
 
-    function exportResults(format) {
-      if (results.length === 0) return alert("No results to export.");
-      if (format === "csv") {
-        let csv = "Text,Word,Annotation,KWIC\n";
-        results.forEach(r => {
-          csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n`;
-        });
-        download("search_results.csv", csv);
-      } else {
-        download("search_results.json", JSON.stringify(results, null, 2));
-      }
-    }
+function exportResults(format) {
+  if (results.length === 0) return alert("No results to export.");
+  if (format === "csv") {
+    let csv = "Text,Word,Annotation,KWIC\n";
+    results.forEach(r => {
+      csv += "${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n;
+    });
+    download("search_results.csv", csv);
+  } else {
+    download("search_results.json", JSON.stringify(results, null, 2));
+  }
+}
 
-    function download(filename, content) {
-      const blob = new Blob([content], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-    }
-  </script>
+function download(filename, content) {
+  const blob = new Blob([content], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+</script>
 </body>
 </html>
