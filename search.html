@@ -9,18 +9,19 @@
     table { border-collapse: collapse; width: 100%; margin-top: 1em; }
     th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
     #results, #stats { margin-top: 2em; }
-    .kwic-hit { background: yellow; font-weight: bold; padding: 0 2px; }
-    .kwic-container { padding: 5px; border: 1px solid #ddd; margin-bottom: 10px; }
+    .kwic-hit { background: yellow; font-weight: bold; }
+    .kwic-context { color: #555; font-size: 0.9em; }
   </style>
 </head>
 <body>
   <h1>Zaza Corpus – Search Tool</h1>
   <div>
-    <input id="wordInput" type="text" placeholder="🔤 Word contains..." oninput="performSearch()"/>
-    <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..." oninput="performSearch()"/>
-    <select id="fileFilter" onchange="performSearch()">
+    <input id="wordInput" type="text" placeholder="🔤 Word contains..."/>
+    <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..."/>
+    <select id="fileFilter">
       <option value="">📂 All texts</option>
     </select>
+    <button onclick="performSearch()">Search</button>
     <button onclick="exportResults('csv')">Export CSV</button>
     <button onclick="exportResults('json')">Export JSON</button>
   </div>
@@ -34,8 +35,8 @@
       "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
       "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
       "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
-      "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini_de_astıkê_ma_serde_çinê.html",
-      "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila Çêna Şıx Heseni.html"
+      "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini-de-astıkê-ma-serde-çinê.html",
+      "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila_Çêna_Şıx_Heseni.html"
     ];
     const results = [];
 
@@ -62,22 +63,32 @@
         const html = await res.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
+
+        // Alle Texte im Dokument durchsuchen, um den Satz zu extrahieren
         const spans = doc.querySelectorAll("span.annotated");
 
-        spans.forEach((span, i) => {
+        spans.forEach((span) => {
           const word = span.childNodes[0]?.textContent?.trim() || "";
           const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
+
+          // Überprüfe, ob das Wort oder die Annotation im Satz enthalten ist
           if (
-            (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
+            (!wordQuery || word.toLowerCase().includes(wordQuery)) ||
             (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
-
             let sentenceEl = span.closest("span.sentence");
-            let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
+            let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
 
-            // Heben das gesuchte Wort im Satz hervor
-            const highlighted = sentenceHTML.replace(word, `<span class='kwic-hit'>${word}</span>`);
-            results.push({ file, word, annotation, context: highlighted });
+            // Wenn kein Satz gefunden wird, versuchen wir den angrenzenden Kontext zu extrahieren
+            if (!sentenceText) {
+              let prevText = span.previousElementSibling ? span.previousElementSibling.textContent.trim() : '';
+              let nextText = span.nextElementSibling ? span.nextElementSibling.textContent.trim() : '';
+              sentenceText = `${prevText} ${span.textContent.trim()} ${nextText}`.trim();
+            }
+
+            // Markiere das gesuchte Wort im Satz
+            const highlightedSentence = sentenceText.replace(new RegExp(wordQuery, 'gi'), (match) => `<span class="kwic-hit">${match}</span>`);
+            results.push({ file, word: wordQuery, annotation, context: highlightedSentence });
           }
         });
       }
@@ -95,7 +106,7 @@
       }
       let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
       data.forEach(r => {
-        html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td>${r.context}</td></tr>`;
+        html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
       });
       html += "</table>";
       container.innerHTML = html;
