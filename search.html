@@ -9,8 +9,7 @@
     table { border-collapse: collapse; width: 100%; margin-top: 1em; }
     th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
     #results, #stats { margin-top: 2em; }
-    .kwic-hit { background: yellow; font-weight: bold; padding: 0 2px; }
-    .kwic-container { padding: 5px; border: 1px solid #ddd; margin-bottom: 10px; }
+    .kwic-hit { background: yellow; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -34,8 +33,8 @@
       "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
       "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
       "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
-      "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini_de_astıkê_ma_serde_çinê.html",
-      "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila Çêna Şıx Heseni.html"
+      "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini-de-astıkê-ma-serde-çinê.html",
+      "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila_Çêna_Şıx_Heseni.html"
     ];
     const results = [];
 
@@ -71,13 +70,12 @@
             (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
             (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
-
             let sentenceEl = span.closest("span.sentence");
-            let sentenceHTML = sentenceEl ? sentenceEl.innerHTML : span.outerHTML;
-
-            // Heben das gesuchte Wort im Satz hervor
-            const highlighted = sentenceHTML.replace(word, `<span class='kwic-hit'>${word}</span>`);
-            results.push({ file, word, annotation, context: highlighted });
+            let sentenceText = sentenceEl ? sentenceEl.textContent : span.textContent;
+            
+            // Hervorhebung des gesuchten Worts im Satz
+            const highlightedSentence = sentenceText.replace(word, `<span class='kwic-hit'>${word}</span>`);
+            results.push({ file, word, annotation, context: highlightedSentence });
           }
         });
       }
