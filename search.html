@@ -21,7 +21,7 @@
     <select id="fileFilter">
       <option value="">📂 All texts</option>
     </select>
-    <button id="searchButton">Search</button>
+    <button onclick="performSearch()">Search</button>
     <button onclick="exportResults('csv')">Export CSV</button>
     <button onclick="exportResults('json')">Export JSON</button>
   </div>
@@ -47,10 +47,6 @@
         opt.value = f; opt.textContent = f;
         filter.appendChild(opt);
       });
-
-      // Ensure that the search is triggered by clicking the button, not automatically
-      const searchButton = document.getElementById("searchButton");
-      searchButton.addEventListener("click", performSearch);
     };
 
     async function performSearch() {
@@ -67,33 +63,29 @@
         const html = await res.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
-
-        // Alle Texte im Dokument durchsuchen, um den Satz zu extrahieren
         const spans = doc.querySelectorAll("span.annotated");
 
         spans.forEach((span) => {
           const word = span.childNodes[0]?.textContent?.trim() || "";
           const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
-
-          // Überprüfe, ob das Wort oder die Annotation im Satz vorkommt
           if (
-            (wordQuery && word.toLowerCase().includes(wordQuery)) ||
-            (annotationQuery && annotation.toLowerCase().includes(annotationQuery))
+            (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
+            (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
-            // Den kompletten Satz extrahieren
+            // Versuche den Satz zu extrahieren
             let sentenceEl = span.closest("span.sentence");
             let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
 
-            // Wenn kein Satz gefunden wird, versuchen wir den angrenzenden Kontext zu extrahieren
+            // Wenn kein Satz gefunden wird, versuche den Kontext aus benachbarten Texten zu extrahieren
             if (!sentenceText) {
               let prevText = span.previousElementSibling ? span.previousElementSibling.textContent.trim() : '';
               let nextText = span.nextElementSibling ? span.nextElementSibling.textContent.trim() : '';
               sentenceText = `${prevText} ${span.textContent.trim()} ${nextText}`.trim();
             }
 
-            // Markiere das gesuchte Wort im Satz
-            const highlightedSentence = sentenceText.replace(new RegExp(wordQuery, 'gi'), (match) => `<span class="kwic-hit">${match}</span>`);
-            results.push({ file, word: wordQuery, annotation, context: highlightedSentence });
+            // Wenn der Satz gefunden wird, stelle sicher, dass das gesuchte Wort hervorgehoben wird
+            const highlightedSentence = sentenceText.replace(word, `<span class='kwic-hit'>${word}</span>`);
+            results.push({ file, word, annotation, context: highlightedSentence });
           }
         });
       }
@@ -109,9 +101,9 @@
         document.getElementById("stats").innerHTML = "";
         return;
       }
-      let html = "<table><tr><th>Text</th><th>Word</th><th>KWIC</th></tr>";
+      let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
       data.forEach(r => {
-        html += `<tr><td>${r.file}</td><td>${r.word}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
+        html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
       });
       html += "</table>";
       container.innerHTML = html;
@@ -137,9 +129,9 @@
     function exportResults(format) {
       if (results.length === 0) return alert("No results to export.");
       if (format === "csv") {
-        let csv = "Text,Word,KWIC\n";
+        let csv = "Text,Word,Annotation,KWIC\n";
         results.forEach(r => {
-          csv += `"${r.file}","${r.word}","${r.context.replace(/"/g, '""')}"\n`;
+          csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n`;
         });
         download("search_results.csv", csv);
       } else {
