@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +28,6 @@
   </div>
   <div id="results"></div>
   <div id="stats"></div>
-
   <script>
     const files = [
       "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
@@ -39,7 +39,6 @@
       "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila_Çêna_Şıx_Heseni.html"
     ];
     const results = [];
-
     window.onload = () => {
       const filter = document.getElementById("fileFilter");
       files.forEach(f => {
@@ -48,23 +47,18 @@
         filter.appendChild(opt);
       });
     };
-
     async function performSearch() {
       const wordQuery = document.getElementById("wordInput").value.toLowerCase().trim();
       const annotationQuery = document.getElementById("annotationInput").value.toLowerCase().trim();
       const fileFilter = document.getElementById("fileFilter").value;
-
       results.length = 0;
-
       const selectedFiles = fileFilter ? [fileFilter] : files;
-
       for (const file of selectedFiles) {
         const res = await fetch(file);
         const html = await res.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
         const spans = doc.querySelectorAll("span.annotated");
-
         spans.forEach((span) => {
           const word = span.childNodes[0]?.textContent?.trim() || "";
           const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
@@ -72,26 +66,69 @@
             (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
             (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
           ) {
-            // Versuche den Satz zu extrahieren
-            let sentenceEl = span.closest("span.sentence");
-            let sentenceText = sentenceEl ? sentenceEl.textContent.trim() : '';
-
-            // Wenn kein Satz gefunden wird, versuche den Kontext aus benachbarten Texten zu extrahieren
-            if (!sentenceText) {
-              let prevText = span.previousElementSibling ? span.previousElementSibling.textContent.trim() : '';
-              let nextText = span.nextElementSibling ? span.nextElementSibling.textContent.trim() : '';
-              sentenceText = `${prevText} ${span.textContent.trim()} ${nextText}`.trim();
-            }
-
-            // Wenn der Satz gefunden wird, stelle sicher, dass das gesuchte Wort hervorgehoben wird
-            const highlightedSentence = sentenceText.replace(word, `<span class='kwic-hit'>${word}</span>`);
-            results.push({ file, word, annotation, context: highlightedSentence });
+            // Vollständigen Satz aus dem Originaltext ermitteln; Tooltips ausschließen.
+            const sentence = getFullSentence(span, doc);
+            const context = highlightSentence(sentence.text, sentence.hitStart, sentence.hitEnd);
+            results.push({ file, word, annotation, context });
           }
         });
       }
-
       showResults(results);
       showStats(results);
+    }
+    // Liest den zusammenhängenden Text einschließlich nicht annotierter Wörter.
+    function getFullSentence(span, doc) {
+      const root = span.closest('p, li, blockquote, td, article') ||
+                   doc.querySelector('main') || doc.body;
+      const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          if (!parent || parent.closest('.tooltip-box, script, style, nav'))
+            return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let text = '';
+      let hitStart = -1;
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node === span.firstChild) hitStart = text.length;
+        text += node.textContent;
+      }
+      const hitEnd = hitStart + (span.firstChild?.textContent.length || 0);
+      if (hitStart < 0) return { text: span.firstChild?.textContent || '', hitStart: 0,
+                                hitEnd: span.firstChild?.textContent.length || 0 };
+
+      // Nur Satzzeichen mit nachfolgendem Leerraum als Satzgrenze behandeln.
+      const boundary = /[.!?]+(?=\s|$)/g;
+      let start = 0, end = text.length, match;
+      while ((match = boundary.exec(text))) {
+        if (match.index + match[0].length <= hitStart) {
+          start = match.index + match[0].length;
+        } else {
+          end = match.index + match[0].length;
+          break;
+        }
+      }
+      const raw = text.slice(start, end);
+      const leading = raw.length - raw.trimStart().length;
+      return {
+        text: raw.trim(),
+        hitStart: hitStart - start - leading,
+        hitEnd: hitEnd - start - leading
+      };
+    }
+
+    function escapeHTML(value) {
+      return value.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function highlightSentence(text, start, end) {
+      if (start < 0 || end > text.length || end <= start) return escapeHTML(text);
+      return escapeHTML(text.slice(0, start)) +
+        '<span class="kwic-hit">' + escapeHTML(text.slice(start, end)) + '</span>' +
+        escapeHTML(text.slice(end));
     }
 
     function showResults(data) {
@@ -103,12 +140,11 @@
       }
       let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
       data.forEach(r => {
-        html += `<tr><td>${r.file}</td><td>${r.word}</td><td>${r.annotation}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
+        html += `<tr><td>${escapeHTML(r.file)}</td><td>${escapeHTML(r.word)}</td><td>${escapeHTML(r.annotation)}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
       });
       html += "</table>";
       container.innerHTML = html;
     }
-
     function showStats(data) {
       const container = document.getElementById("stats");
       const freq = {};
@@ -125,7 +161,6 @@
       html += "</ul>";
       container.innerHTML = html;
     }
-
     function exportResults(format) {
       if (results.length === 0) return alert("No results to export.");
       if (format === "csv") {
@@ -138,7 +173,6 @@
         download("search_results.json", JSON.stringify(results, null, 2));
       }
     }
-
     function download(filename, content) {
       const blob = new Blob([content], { type: "text/plain" });
       const a = document.createElement("a");
