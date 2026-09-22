@@ -48,7 +48,7 @@
        });
      };
      async function performSearch() {
-      const wordQuery = document.getElementById("wordInput").value.toLocaleLowerCase().trim();
+      const wordQuery = document.getElementById("wordInput").value.trim().normalize("NFC").toLocaleLowerCase();
       const annotationQuery = document.getElementById("annotationInput").value.toLocaleLowerCase().trim();
       const fileFilter = document.getElementById("fileFilter").value;
       results.length = 0;
@@ -69,30 +69,40 @@
           continue;
         }
         if (wordQuery) {
-          // Auch nicht annotierte Wörter werden in der Wortsuche berücksichtigt.
-          const root = doc.querySelector('#textContent') || doc.body;
-          const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-            acceptNode(node) {
-              if (!node.parentElement || node.parentElement.closest(
-                '.tooltip-box, #metadata, script, style, nav, header, footer'
-              )) return NodeFilter.FILTER_REJECT;
-              return NodeFilter.FILTER_ACCEPT;
+          // Nur die eigentlichen Textabschnitte durchsuchen, nie Titel oder Metadaten.
+          // Exakter Wortvergleich (Groß-/Kleinschreibung ignorieren), keine Teilwörter.
+          // Die annotierten Wörter dienen als Anker für die Textabschnitte.
+          const textRoots = new Set();
+          doc.querySelectorAll('span.annotated').forEach(span => {
+            const section = span.closest('p, li, blockquote') || span.parentElement;
+            if (section && !section.closest('#metadata, nav, header, footer, h1, h2, h3')) {
+              textRoots.add(section);
             }
           });
-          let node;
-          while ((node = walker.nextNode())) {
-            const tokens = /[\p{L}\p{M}\p{N}]+(?:['’\-][\p{L}\p{M}\p{N}]+)*/gu;
-            for (const match of node.textContent.matchAll(tokens)) {
-              const word = match[0];
-              if (!word.toLocaleLowerCase().includes(wordQuery)) continue;
-              const annotated = node.parentElement.closest('span.annotated');
-              const annotation = annotated?.querySelector('.tooltip-box')?.textContent?.trim() || '';
-              if (annotationQuery && !annotation.toLocaleLowerCase().includes(annotationQuery)) continue;
-              const sentence = getFullSentenceAt(node, match.index, word.length, doc);
-              results.push({
-                file, word, annotation,
-                context: highlightSentence(sentence.text, sentence.hitStart, sentence.hitEnd)
-              });
+          for (const root of textRoots) {
+            const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+              acceptNode(node) {
+                if (!node.parentElement || node.parentElement.closest(
+                  '.tooltip-box, #metadata, script, style, nav, header, footer, h1, h2, h3'
+                )) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+              }
+            });
+            let node;
+            while ((node = walker.nextNode())) {
+              const tokens = /[\p{L}\p{M}\p{N}]+(?:['’\-][\p{L}\p{M}\p{N}]+)*/gu;
+              for (const match of node.textContent.matchAll(tokens)) {
+                const word = match[0];
+                if (word.normalize("NFC").toLocaleLowerCase() !== wordQuery) continue;
+                const annotated = node.parentElement.closest('span.annotated');
+                const annotation = annotated?.querySelector('.tooltip-box')?.textContent?.trim() || '';
+                if (annotationQuery && !annotation.toLocaleLowerCase().includes(annotationQuery)) continue;
+                const sentence = getFullSentenceAt(node, match.index, word.length, doc);
+                results.push({
+                  file, word, annotation,
+                  context: highlightSentence(sentence.text, sentence.hitStart, sentence.hitEnd)
+                });
+              }
             }
           }
         } else {
