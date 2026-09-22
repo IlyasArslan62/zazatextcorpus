@@ -1,106 +1,147 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <title>Zaza Corpus – Search</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
-    #results, #stats { margin-top: 2em; }
-    .kwic-hit { font-weight: bold; }
-    .kwic-context { color: #555; font-size: 0.9em; }
-  </style>
-</head>
-<body>
-  <h1>Zaza Corpus – Search Tool</h1>
-  <div>
-    <input id="wordInput" type="text" placeholder="🔤 Word contains..."/>
-    <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..."/>
-    <select id="fileFilter">
-      <option value="">📂 All texts</option>
-    </select>
-    <button onclick="performSearch()">Search</button>
-    <button onclick="exportResults('csv')">Export CSV</button>
-    <button onclick="exportResults('json')">Export JSON</button>
-  </div>
-  <div id="results"></div>
-  <div id="stats"></div>
-  <script>
-    const files = [
-      "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
-      "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html", "Emina_Çêna_Dıle_Alê_Qeri.html",
-      "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
-      "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
-      "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
-      "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini-de-astıkê-ma-serde-çinê.html",
-      "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila_Çêna_Şıx_Heseni.html"
-    ];
-    const results = [];
-    window.onload = () => {
-      const filter = document.getElementById("fileFilter");
-      files.forEach(f => {
-        const opt = document.createElement("option");
-        opt.value = f; opt.textContent = f;
-        filter.appendChild(opt);
-      });
-    };
-    async function performSearch() {
-      const wordQuery = document.getElementById("wordInput").value.toLowerCase().trim();
-      const annotationQuery = document.getElementById("annotationInput").value.toLowerCase().trim();
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+   <meta charset="utf-8"/>
+   <title>Zaza Corpus – Search</title>
+   <style>
+     body { font-family: Arial, sans-serif; margin: 2em; }
+     input, select, button { padding: 0.5em; margin: 0.5em 0.5em 0.5em 0; }
+     table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+     th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+     #results, #stats { margin-top: 2em; }
+     .kwic-hit { font-weight: bold; }
+     .kwic-context { color: #555; font-size: 0.9em; }
+   </style>
+ </head>
+ <body>
+   <h1>Zaza Corpus – Search Tool</h1>
+   <div>
+     <input id="wordInput" type="text" placeholder="🔤 Word contains..."/>
+     <input id="annotationInput" type="text" placeholder="🏷️ Annotation contains..."/>
+     <select id="fileFilter">
+       <option value="">📂 All texts</option>
+     </select>
+     <button onclick="performSearch()">Search</button>
+     <button onclick="exportResults('csv')">Export CSV</button>
+     <button onclick="exportResults('json')">Export JSON</button>
+   </div>
+   <div id="results"></div>
+   <div id="stats"></div>
+   <script>
+     const files = [
+       "Aliyem.html", "Ana_Dina.html", "Cem_ve_Neslihane_ra.html",
+       "Dı_Budelaê_Suke_Bava_Bertal_ve_Sewşêni_ra.html", "Emina_Çêna_Dıle_Alê_Qeri.html",
+       "Estemol.html", "Fide.html", "Kılıte_Dersimi.html", "Lüye_ve_Heyvanunê_Gême_ra.html",
+       "Qewğa_Alunê_Demenu.html", "Sawci_çay_simenê.html", "Sey_Momıd.html",
+       "Sey_Qaji.html", "Sılemano_Qıc.html", "Sılê_Phiti.html",
+       "Ters_u_Xofê_Elife_ve_Çênu_ra.html", "Vılê_Zini-de-astıkê-ma-serde-çinê.html",
+       "Xana_Feqire.html", "Yemose_ve_Xıdıri_ra.html", "Cemila_Çêna_Şıx_Heseni.html"
+     ];
+     const results = [];
+     window.onload = () => {
+       const filter = document.getElementById("fileFilter");
+       files.forEach(f => {
+         const opt = document.createElement("option");
+         opt.value = f; opt.textContent = f;
+         filter.appendChild(opt);
+       });
+     };
+     async function performSearch() {
+      const wordQuery = document.getElementById("wordInput").value.toLocaleLowerCase().trim();
+      const annotationQuery = document.getElementById("annotationInput").value.toLocaleLowerCase().trim();
       const fileFilter = document.getElementById("fileFilter").value;
       results.length = 0;
+      if (!wordQuery && !annotationQuery) {
+        showResults(results);
+        showStats(results);
+        return;
+      }
       const selectedFiles = fileFilter ? [fileFilter] : files;
       for (const file of selectedFiles) {
-        const res = await fetch(file);
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const spans = doc.querySelectorAll("span.annotated");
-        spans.forEach((span) => {
-          const word = span.childNodes[0]?.textContent?.trim() || "";
-          const annotation = span.querySelector(".tooltip-box")?.textContent?.trim() || "";
-          if (
-            (!wordQuery || word.toLowerCase().includes(wordQuery)) &&
-            (!annotationQuery || annotation.toLowerCase().includes(annotationQuery))
-          ) {
-            // Vollständigen Satz aus dem Originaltext ermitteln; Tooltips ausschließen.
-            const sentence = getFullSentence(span, doc);
-            const context = highlightSentence(sentence.text, sentence.hitStart, sentence.hitEnd);
-            results.push({ file, word, annotation, context });
+        let doc;
+        try {
+          const res = await fetch(file);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          doc = new DOMParser().parseFromString(await res.text(), "text/html");
+        } catch (error) {
+          console.warn(`Could not load ${file}:`, error);
+          continue;
+        }
+        if (wordQuery) {
+          // Auch nicht annotierte Wörter werden in der Wortsuche berücksichtigt.
+          const root = doc.querySelector('#textContent') || doc.body;
+          const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+              if (!node.parentElement || node.parentElement.closest(
+                '.tooltip-box, #metadata, script, style, nav, header, footer'
+              )) return NodeFilter.FILTER_REJECT;
+              return NodeFilter.FILTER_ACCEPT;
+            }
+          });
+          let node;
+          while ((node = walker.nextNode())) {
+            const tokens = /[\p{L}\p{M}\p{N}]+(?:['’\-][\p{L}\p{M}\p{N}]+)*/gu;
+            for (const match of node.textContent.matchAll(tokens)) {
+              const word = match[0];
+              if (!word.toLocaleLowerCase().includes(wordQuery)) continue;
+              const annotated = node.parentElement.closest('span.annotated');
+              const annotation = annotated?.querySelector('.tooltip-box')?.textContent?.trim() || '';
+              if (annotationQuery && !annotation.toLocaleLowerCase().includes(annotationQuery)) continue;
+              const sentence = getFullSentenceAt(node, match.index, word.length, doc);
+              results.push({
+                file, word, annotation,
+                context: highlightSentence(sentence.text, sentence.hitStart, sentence.hitEnd)
+              });
+            }
           }
-        });
+        } else {
+          // Die bisherige Annotationssuche bleibt bestehen.
+          doc.querySelectorAll('span.annotated').forEach(span => {
+            const word = span.firstChild?.textContent?.trim() || '';
+            const annotation = span.querySelector('.tooltip-box')?.textContent?.trim() || '';
+            if (!annotation.toLocaleLowerCase().includes(annotationQuery)) return;
+            const sentence = getFullSentence(span, doc);
+            results.push({
+              file, word, annotation,
+              context: highlightSentence(sentence.text, sentence.hitStart, sentence.hitEnd)
+            });
+          });
+        }
       }
       showResults(results);
       showStats(results);
     }
-    // Liest den zusammenhängenden Text einschließlich nicht annotierter Wörter.
+
     function getFullSentence(span, doc) {
-      const root = span.closest('#textContent p, #textContent li, #textContent blockquote') ||
-                   span.closest('p, li, blockquote') || doc.querySelector('#textContent') || doc.body;
+      const node = span.firstChild;
+      if (!node) return { text: '', hitStart: -1, hitEnd: -1 };
+      return getFullSentenceAt(node, 0, node.textContent.length, doc);
+    }
+
+    // Rekonstruiert einen vollständigen Satz aus sichtbaren Textknoten,
+    // ohne Annotationen und Tooltip-Inhalte in den Satz zu übernehmen.
+    function getFullSentenceAt(hitNode, offset, length, doc) {
+      const root = hitNode.parentElement.closest(
+        '#textContent p, #textContent li, #textContent blockquote'
+      ) || hitNode.parentElement.closest('p, li, blockquote') ||
+        doc.querySelector('#textContent') || doc.body;
       const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
-          const parent = node.parentElement;
-          if (!parent || parent.closest('.tooltip-box, #metadata, script, style, nav'))
-            return NodeFilter.FILTER_REJECT;
+          if (!node.parentElement || node.parentElement.closest(
+            '.tooltip-box, #metadata, script, style, nav, header, footer'
+          )) return NodeFilter.FILTER_REJECT;
           return NodeFilter.FILTER_ACCEPT;
         }
       });
-      let text = '';
-      let hitStart = -1;
-      let node;
+      let text = '', hitStart = -1, node;
       while ((node = walker.nextNode())) {
-        if (node === span.firstChild) hitStart = text.length;
+        if (node === hitNode) hitStart = text.length + offset;
         text += node.textContent;
       }
-      const hitEnd = hitStart + (span.firstChild?.textContent.length || 0);
-      if (hitStart < 0) return { text: span.firstChild?.textContent || '', hitStart: 0,
-                                hitEnd: span.firstChild?.textContent.length || 0 };
-
-      // Nur Satzzeichen mit nachfolgendem Leerraum als Satzgrenze behandeln.
-      const boundary = /[.!?]+[\u201d\u2019\"']*(?=\s|$)/g;
+      if (hitStart < 0) return { text: hitNode.textContent, hitStart: offset, hitEnd: offset + length };
+      const hitEnd = hitStart + length;
+      const boundary = /[.!?]+[\u201d\u2019"']*(?=\s|$)/g;
       let start = 0, end = text.length, match;
       while ((match = boundary.exec(text))) {
         if (match.index + match[0].length <= hitStart) {
@@ -111,75 +152,79 @@
         }
       }
       const raw = text.slice(start, end);
+      const normalize = value => value.replace(/\s+/g, ' ');
+      const prefix = normalize(raw.slice(0, hitStart - start));
+      const prefixAndHit = normalize(raw.slice(0, hitEnd - start));
+      const leading = normalize(raw).length - normalize(raw).trimStart().length;
       return {
-        text: raw.replace(/\s+/g, ' ').trim(),
-        hitStart: raw.slice(0, hitStart - start).replace(/\s+/g, ' ').trimStart().length,
-        hitEnd: raw.slice(0, hitEnd - start).replace(/\s+/g, ' ').trimStart().length
+        text: normalize(raw).trim(),
+        hitStart: prefix.length - leading,
+        hitEnd: prefixAndHit.length - leading
       };
     }
 
     function escapeHTML(value) {
-      return value.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
+       return value.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+     }
 
-    function highlightSentence(text, start, end) {
-      if (start < 0 || end > text.length || end <= start) return escapeHTML(text);
-      return escapeHTML(text.slice(0, start)) +
-        '<span class="kwic-hit">' + escapeHTML(text.slice(start, end)) + '</span>' +
-        escapeHTML(text.slice(end));
-    }
+     function highlightSentence(text, start, end) {
+       if (start < 0 || end > text.length || end <= start) return escapeHTML(text);
+       return escapeHTML(text.slice(0, start)) +
+         '<span class="kwic-hit">' + escapeHTML(text.slice(start, end)) + '</span>' +
+         escapeHTML(text.slice(end));
+     }
 
-    function showResults(data) {
-      const container = document.getElementById("results");
-      if (data.length === 0) {
-        container.innerHTML = "<p>No results found.</p>";
-        document.getElementById("stats").innerHTML = "";
-        return;
-      }
-      let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
-      data.forEach(r => {
-        html += `<tr><td>${escapeHTML(r.file)}</td><td>${escapeHTML(r.word)}</td><td>${escapeHTML(r.annotation)}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
-      });
-      html += "</table>";
-      container.innerHTML = html;
-    }
-    function showStats(data) {
-      const container = document.getElementById("stats");
-      const freq = {};
-      data.forEach(r => {
-        r.annotation.split("|").forEach(a => {
-          const key = a.trim();
-          if (key) freq[key] = (freq[key] || 0) + 1;
-        });
-      });
-      let html = "<h2>📊 Annotation Statistics</h2><ul>";
-      for (const [ann, count] of Object.entries(freq)) {
-        html += `<li><b>${ann}</b>: ${count}</li>`;
-      }
-      html += "</ul>";
-      container.innerHTML = html;
-    }
-    function exportResults(format) {
-      if (results.length === 0) return alert("No results to export.");
-      if (format === "csv") {
-        let csv = "Text,Word,Annotation,KWIC\n";
-        results.forEach(r => {
-          csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n`;
-        });
-        download("search_results.csv", csv);
-      } else {
-        download("search_results.json", JSON.stringify(results, null, 2));
-      }
-    }
-    function download(filename, content) {
-      const blob = new Blob([content], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-    }
-  </script>
-</body>
-</html>
+     function showResults(data) {
+       const container = document.getElementById("results");
+       if (data.length === 0) {
+         container.innerHTML = "<p>No results found.</p>";
+         document.getElementById("stats").innerHTML = "";
+         return;
+       }
+       let html = "<table><tr><th>Text</th><th>Word</th><th>Annotation</th><th>KWIC</th></tr>";
+       data.forEach(r => {
+         html += `<tr><td>${escapeHTML(r.file)}</td><td>${escapeHTML(r.word)}</td><td>${escapeHTML(r.annotation)}</td><td><span class='kwic-context'>${r.context}</span></td></tr>`;
+       });
+       html += "</table>";
+       container.innerHTML = html;
+     }
+     function showStats(data) {
+       const container = document.getElementById("stats");
+       const freq = {};
+       data.forEach(r => {
+         r.annotation.split("|").forEach(a => {
+           const key = a.trim();
+           if (key) freq[key] = (freq[key] || 0) + 1;
+         });
+       });
+       let html = "<h2>📊 Annotation Statistics</h2><ul>";
+       for (const [ann, count] of Object.entries(freq)) {
+         html += `<li><b>${ann}</b>: ${count}</li>`;
+       }
+       html += "</ul>";
+       container.innerHTML = html;
+     }
+     function exportResults(format) {
+       if (results.length === 0) return alert("No results to export.");
+       if (format === "csv") {
+         let csv = "Text,Word,Annotation,KWIC\n";
+         results.forEach(r => {
+           csv += `"${r.file}","${r.word}","${r.annotation}","${r.context.replace(/"/g, '""')}"\n`;
+         });
+         download("search_results.csv", csv);
+       } else {
+         download("search_results.json", JSON.stringify(results, null, 2));
+       }
+     }
+     function download(filename, content) {
+       const blob = new Blob([content], { type: "text/plain" });
+       const a = document.createElement("a");
+       a.href = URL.createObjectURL(blob);
+       a.download = filename;
+       a.click();
+     }
+   </script>
+ </body>
+ </html>
 
